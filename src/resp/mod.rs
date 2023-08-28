@@ -2,18 +2,21 @@ use thiserror::Error;
 use tokio::net::TcpStream;
 
 #[derive(Debug)]
-pub struct ConnectionMultiplexer {
+pub struct ConnectionParams {
     pub url: String,
     pub user: String,
     pub pass: String,
     pub port: i32,
     pub tls: bool,
-    tcp: TcpStream,
+}
+
+struct ConnectionMultiplexer {
+    stream: TcpStream,
 }
 
 impl ConnectionMultiplexer {
-    pub async fn connect_async(&self) -> Result<(), ConnectionError> {
-        let conn = TcpStream::connect(&self.url).await?;
+    pub async fn connect_async(conn: &ConnectionParams) -> Result<(), ConnectionError> {
+        let _conn = TcpStream::connect(&conn.url).await?;
         return Ok(());
     }
 }

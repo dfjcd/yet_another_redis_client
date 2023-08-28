@@ -1,11 +1,11 @@
 use std::str::FromStr;
 
-use resp::ConnectionMultiplexer;
+use resp::ConnectionParams;
 
 mod resp;
 #[tokio::main]
 async fn main() {
-    let conn = ConnectionMultiplexer {
+    let conn = ConnectionParams {
         user: String::from_str("default").unwrap(),
         url: String::from_str("redis.test.com").unwrap(),
         pass: String::from_str("pass1234").unwrap(),
