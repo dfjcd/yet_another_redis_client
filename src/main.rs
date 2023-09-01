@@ -1,22 +1,20 @@
-use std::str::FromStr;
-
-use resp::{ConnectionParams, ConnectionError, ConnectionMultiplexer};
+use config::{Config, File};
+use resp::{ConnectionMultiplexer, ConnectionParams};
 
 mod resp;
+mod commands;
 
 #[tokio::main]
-async fn main() -> Result<(), ConnectionError> {
-    let conn = ConnectionParams {
-        user: String::from_str("default").unwrap(),
-        url: String::from_str("").unwrap(),
-        pass: String::from_str("").unwrap(),
-        tls: false,
-        port: 6379,
-    };
+async fn main() -> Result<(), anyhow::Error> {
+    let settings = Config::builder()
+        .add_source(File::with_name("app\\config.toml"))
+        .build()?;
 
-    println!("Config: {:?}", conn);
+    let param = settings.try_deserialize::<ConnectionParams>()?;
 
-    let conn = ConnectionMultiplexer::connect_async(conn).await?;
+    println!("Config: {:?}", param);
+
+    let mut conn = ConnectionMultiplexer::connect_async(param).await?;
     conn.say_hello().await?;
     Ok(())
 }

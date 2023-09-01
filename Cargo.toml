@@ -9,3 +9,6 @@ edition = "2021"
 anyhow = "1.0.75"
 thiserror = "1.0.47"
 tokio = { version = "1.32.0", features = ["net", "tokio-macros", "macros", "rt-multi-thread", "io-util"] }
+config = "0.13.1"
+serde = "1.0.188"
+async-trait = "0.1.73"

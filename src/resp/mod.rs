@@ -6,7 +6,7 @@ use std::net::TcpStream;
 
 use thiserror::Error;
 
-#[derive(Debug)]
+#[derive(Debug, serde::Deserialize)]
 pub struct ConnectionParams {
     pub url: String,
     pub user: String,
@@ -15,15 +15,20 @@ pub struct ConnectionParams {
     pub tls: bool,
 }
 
+impl ConnectionParams {
+    fn url(&self) -> String {
+        format!("{}:{}", &self.url, &self.port)
+    }
+}
+
 pub struct ConnectionMultiplexer {
     stream: TcpStream,
     param: ConnectionParams,
 }
 
 impl ConnectionMultiplexer {
-    pub async fn connect_async(param: ConnectionParams) -> Result<Self, ConnectionError> {
-        let addr = format!("{}:{}", &param.url, &param.port);
-        let conn = TcpStream::connect(addr)?;
+    pub async fn connect_async(param: ConnectionParams) -> Result<Self, anyhow::Error> {
+        let conn = TcpStream::connect(param.url())?;
         let _ = conn.set_ttl(60);
         return Ok(ConnectionMultiplexer {
             stream: conn,
@@ -31,36 +36,33 @@ impl ConnectionMultiplexer {
         });
     }
 
-    pub async fn say_hello(mut self) -> Result<(), ConnectionError> {
-        /*let i = self.stream.write_all(b"HELLO 3");
-        println!("write_all: {:?}", i);
-        let _ = self.stream.flush();*/
-        let addr = format!("{}:{}", &self.param.url, &self.param.port);
-        let mut conn = TcpStream::connect(addr)?;
-        let _ = conn.write_all(b"HELLO 3\r\n");
-        println!("{:?}", conn);
-        //let mut buff = Vec::<u8>::new();
-        //let mut buf = String::new();
-        let mut reader = BufReader::new(&conn);
-        let mut line = String::new();
+    pub async fn execute(command: String) {
 
-        let result = reader.read_line(&mut line)?;
-
-        println!("Received {} bytes", result);
-        println!("Line: {:?}", line);
-        let _ = conn.shutdown(std::net::Shutdown::Both);
-        Ok(())
     }
-}
 
-#[derive(Error, Debug)]
-pub enum ConnectionError {
-    #[error("Unable to connect to redis instance")]
-    UnableToConnect(String),
-}
+    pub async fn say_hello(&mut self) -> Result<(), anyhow::Error> {
+        println!("{:?}", self.stream);
+        let _ = &self.stream.write_all(
+            format!("HELLO 2 AUTH {} {}\r\n", &self.param.user, &self.param.pass).as_bytes(),
+        )?;
+        let mut reader: BufReader<&TcpStream> = BufReader::new(&self.stream);
+        //let mut line = String::new();
+        // let mut buf: Vec<u8> = Vec::new();
+        // let lines = reader.lines();
 
-impl From<tokio::io::Error> for ConnectionError {
-    fn from(value: tokio::io::Error) -> Self {
-        ConnectionError::UnableToConnect(value.to_string())
+        // for line in lines {
+        //     println!("Line: {:?}", line.unwrap());
+        // }
+        loop {
+            let mut buf = String::new();
+            let result = reader.read_line(&mut buf)?;
+            if result == 0 {
+                break;
+            }
+            println!("Received {} bytes", result);
+            println!("Line: {:?}", buf);
+        }
+        let _ = self.stream.shutdown(std::net::Shutdown::Both);
+        Ok(())
     }
 }
