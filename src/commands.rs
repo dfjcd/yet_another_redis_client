@@ -11,6 +11,6 @@ pub struct HelloCommand;
 #[async_trait]
 impl Command for HelloCommand {
     async fn execute(&mut self, connection: ConnectionMultiplexer) {
-        connection.execute
+        connection.execute(String::from("HELLO 3")).await;
     }
 }

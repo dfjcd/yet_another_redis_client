@@ -36,7 +36,7 @@ impl ConnectionMultiplexer {
         });
     }
 
-    pub async fn execute(command: String) {
+    pub async fn execute(&self, command: String) {
 
     }
 
